@@ -1,0 +1,9 @@
+668 110 - upgrades
+563 166 - filter select rescue
+610 386 - select doctor in ambulance
+563 166 - unselect rescue
+533 172 - filter select firefighter
+1014 633 - select rescue
+533 172 - unselect firefighter
+648 171 - select engineer
+1416 406 - select crane boost
