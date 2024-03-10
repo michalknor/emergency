@@ -90,14 +90,12 @@ class Program
 
     static void MouseClick(int x, int y)
     {
-        POINT cursorPosition;
-
         if (!SetCursorPos(x, y))
         {
             return;
         }
 
-        if (GetCursorPos(out cursorPosition))
+        if (GetCursorPos(out _))
         {
             mouse_event(MOUSE_EVENT_LEFT_DOWN | MOUSE_EVENT_LEFT_UP, x, y, 0, 0);
         }
