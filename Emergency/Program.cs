@@ -1,6 +1,8 @@
 ﻿using System.Drawing;
+using System;
 
 using System.Runtime.InteropServices;
+using System.Net.Sockets;
 
 #pragma warning disable CA1416 // Validate platform compatibility
 
@@ -26,20 +28,113 @@ class Program
         public int Y;
     }
 
+
+    [DllImport("user32.dll")]
+    static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, IntPtr dwExtraInfo);
+
+    const byte VK_LWIN = 0x5B; // Left Windows key
+    const byte VK_D = 0x44; // D key
+    const byte VK_ALT = 0x12; // Alt key
+    const byte VK_F4 = 0x73; // F4 key
+    const byte VK_ENTER = 0x0D; // Enter key
+    const uint KEYEVENTF_EXTENDEDKEY = 0x0001;
+    const uint KEYEVENTF_KEYUP = 0x0002;
+
     static void Main(string[] args)
     {
         Thread.Sleep(2_000);
         StartTheGame();
+        Shutdown();
+        return;
+    }
+
+    private static void Shutdown()
+    {
+        keybd_event(VK_LWIN, 0, KEYEVENTF_EXTENDEDKEY, IntPtr.Zero);
+        keybd_event(VK_D, 0, KEYEVENTF_EXTENDEDKEY, IntPtr.Zero);
+
+        keybd_event(VK_D, 0, KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP, IntPtr.Zero);
+        keybd_event(VK_LWIN, 0, KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP, IntPtr.Zero);
+
+        Thread.Sleep(1_000);
+
+        keybd_event(VK_ALT, 0, KEYEVENTF_EXTENDEDKEY, IntPtr.Zero);
+        keybd_event(VK_F4, 0, KEYEVENTF_EXTENDEDKEY, IntPtr.Zero);
+
+        keybd_event(VK_ALT, 0, KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP, IntPtr.Zero);
+        keybd_event(VK_F4, 0, KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP, IntPtr.Zero);
+
+        Thread.Sleep(1_000);
+
+        keybd_event(VK_ENTER, 0, KEYEVENTF_EXTENDEDKEY, IntPtr.Zero);
+
+        keybd_event(VK_ENTER, 0, KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP, IntPtr.Zero);
     }
 
     static void StartTheGame()
     {
-        SelectLevel();
-        LoadingLobby();
-        SelectEquipment();
-        LoadingLevel();
+        Fishing(1000-37);
+        return;
+        // SelectLevel();
+        // LoadingLobby();
+        // SelectEquipment();
+        // LoadingLevel();
     }
-    
+
+    static void Fishing(int count)
+    {
+        for (int i = 0; i < count; i++) {
+            Console.WriteLine(i);
+            Thread.Sleep(3_000);
+            MouseClick(950, 380);
+            Thread.Sleep(2_000);
+            CatchFish();
+        }
+    }
+
+    static void CatchFish() {
+        try
+        {
+            (int x, int y) = (911, 537);
+            
+            Color pixelToChange = GetPixelToChange(911, 537);
+
+            while (true)
+            {
+                Bitmap screen = new Bitmap(1, 1);
+                Graphics.FromImage(screen).CopyFromScreen(x, y, 0, 0, screen.Size);
+                Color pixel = screen.GetPixel(0, 0);
+                if (IsACatch(pixel, pixelToChange)) {
+                    screen.Dispose();
+                    Console.WriteLine("Catch!");
+                    MouseClick(1920 / 2, 1080 / 2, 50);
+                    return;
+                }
+
+                screen.Dispose();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"An error occurred: {ex.Message}");
+        }
+    }
+
+    private static Color GetPixelToChange(int x, int y)
+    {
+        Bitmap screen = new Bitmap(1, 1);
+        Graphics.FromImage(screen).CopyFromScreen(x, y, 0, 0, screen.Size);
+        Color pixelToFind = screen.GetPixel(0, 0);
+        screen.Dispose();
+
+        return pixelToFind;
+    }
+
+    private static bool IsACatch(Color pixel1, Color pixel2)
+    {
+        return Math.Abs(pixel1.R - pixel2.R) + Math.Abs(pixel1.G - pixel2.G) + Math.Abs(pixel1.B - pixel2.B) > 50;
+    }
+
     static void SelectLevel()
     {
         (int startingX, int startingY) = (250, 170);
@@ -88,7 +183,7 @@ class Program
         Thread.Sleep(1_000);
     }
 
-    static void MouseClick(int x, int y)
+    static void MouseClick(int x, int y, int delayMilliseconds = 0)
     {
         if (!SetCursorPos(x, y))
         {
@@ -97,7 +192,9 @@ class Program
 
         if (GetCursorPos(out _))
         {
-            mouse_event(MOUSE_EVENT_LEFT_DOWN | MOUSE_EVENT_LEFT_UP, x, y, 0, 0);
+            mouse_event(MOUSE_EVENT_LEFT_DOWN, x, y, 0, 0);
+            Thread.Sleep(delayMilliseconds);
+            mouse_event(MOUSE_EVENT_LEFT_UP, x, y, 0, 0);
         }
     }
 
